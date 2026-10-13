@@ -1,0 +1,6 @@
+dist
+node_modules
+package-lock.json
+# Hand-written project docs; keep their formatting as written.
+CLAUDE.md
+.claude
