@@ -1,4 +1,5 @@
 import { Link, Outlet } from 'react-router'
+import { PmToggle } from '../pm/PmToggle'
 import { ApiStatus } from './ApiStatus'
 
 export function Layout() {
@@ -9,7 +10,10 @@ export function Layout() {
           <Link to="/" className="text-lg font-semibold tracking-tight">
             SmartFlow
           </Link>
-          <ApiStatus />
+          <div className="flex items-center gap-5">
+            <ApiStatus />
+            <PmToggle />
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-10">

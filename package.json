@@ -12,10 +12,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "gen:api": "node scripts/merge-openapi.mjs openapi.json openapi.planned.json node_modules/.tmp/openapi.json && openapi-typescript node_modules/.tmp/openapi.json -o src/api/schema.d.ts --default-non-nullable false",
+    "gen:api:check": "node scripts/merge-openapi.mjs openapi.json openapi.planned.json node_modules/.tmp/openapi.json && (openapi-typescript node_modules/.tmp/openapi.json -o src/api/schema.d.ts --default-non-nullable false --check || (echo 'src/api/schema.d.ts is out of date: run npm run gen:api' >&2 && exit 1))"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.2",
+    "openapi-fetch": "^0.17.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "^7.18.4"
@@ -30,11 +33,17 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^30.1.2",
+    "openapi-typescript": "^7.13.0",
     "oxlint": "^1.81.0",
     "prettier": "^3.9.10",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }

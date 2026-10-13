@@ -27,6 +27,18 @@ In development the Vite dev server forwards `/api` requests to `VITE_API_URL` (s
 | `npm run typecheck` | Type-check without building                                                                         |
 | `npm run format`    | Format with Prettier (`format:check` to only check)                                                 |
 
+## Deploy
+
+Every push and pull request runs the checks in `.github/workflows/ci.yml`; pushes to `main` also deploy to GitHub Pages (https://dbreis.github.io/smartflow-ui/). One-time setup:
+
+1. Repository **Settings → Pages → Source: GitHub Actions**.
+2. Repository **Settings → Secrets and variables → Actions → Variables**: add `VITE_API_URL` with the hosted API's address. Without it the build fails on purpose.
+3. The API must allow this site's origin (`https://dbreis.github.io`) with CORS; the dev proxy only covers local development.
+
+## API contract
+
+`openapi.json` is a copy of the API's spec (`python -m smartflow.openapi <dir>` in the API repo). `openapi.planned.json` lists endpoints the UI needs that the API does not have yet; `npm run gen:api` merges both into `src/api/schema.d.ts`, and fails once the API provides a planned endpoint, so it can be removed from the planned file.
+
 ## Specs
 
 Features are built from specs in `.claude/docs/specs/`; each acceptance criterion maps to a test or a manual check.

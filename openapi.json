@@ -1,0 +1,1317 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SmartFlow API",
+    "version": "0.1.0",
+    "description": "Async REST API for rated user feedback."
+  },
+  "tags": [
+    {
+      "name": "feedback",
+      "description": "Browse and post feedback"
+    },
+    {
+      "name": "comments",
+      "description": "Read and post the discussion of a feedback"
+    },
+    {
+      "name": "notations",
+      "description": "Rate comments (-1, 0, +1)"
+    },
+    {
+      "name": "categories",
+      "description": "Categories feedback can be put in"
+    },
+    {
+      "name": "Product Manager",
+      "description": "Triage feedback. Requires the PM key: click Authorize."
+    },
+    {
+      "name": "health",
+      "description": "Service status"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Check that the server is up",
+        "tags": [
+          "health"
+        ],
+        "responses": {
+          "200": {
+            "description": "The server is running",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/feedback": {
+      "get": {
+        "summary": "List active feedback, newest first, with comment counts",
+        "tags": [
+          "feedback"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackListOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Post a feedback",
+        "tags": [
+          "feedback"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackOut"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "URL of the created resource",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Valid JSON, but invalid or unknown fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/feedback/{feedback_id}": {
+      "get": {
+        "summary": "Get one feedback (merged ones too: see merged_into_id)",
+        "tags": [
+          "feedback"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A referenced resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "feedback_id",
+            "in": "path",
+            "required": true,
+            "description": "The feedback to read",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 999999999
+            }
+          }
+        ]
+      }
+    },
+    "/api/feedback/{feedback_id}/comments": {
+      "get": {
+        "summary": "List the comments of a feedback, best score first",
+        "tags": [
+          "comments"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentListOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A referenced resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "feedback_id",
+            "in": "path",
+            "required": true,
+            "description": "The feedback whose comments to list",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 999999999
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Comment on a feedback",
+        "tags": [
+          "comments"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentOut"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "URL of the created resource",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A referenced resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The feedback was merged into another one and is read-only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Valid JSON, but invalid or unknown fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "feedback_id",
+            "in": "path",
+            "required": true,
+            "description": "The feedback to comment on",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 999999999
+            }
+          }
+        ]
+      }
+    },
+    "/api/comments/{comment_id}/notation": {
+      "post": {
+        "summary": "Give a notation (-1, 0 or +1) to a comment",
+        "tags": [
+          "notations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotationOut"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "URL of the created resource",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A referenced resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Valid JSON, but invalid or unknown fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "description": "The comment to rate",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 999999999
+            }
+          }
+        ]
+      }
+    },
+    "/api/feedback/{feedback_id}/status": {
+      "put": {
+        "summary": "Set the status of a feedback",
+        "tags": [
+          "Product Manager"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackStatusCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid PM key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A referenced resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The feedback was merged into another one and is read-only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Valid JSON, but invalid or unknown fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PM features are not configured on the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "feedback_id",
+            "in": "path",
+            "required": true,
+            "description": "The feedback to update",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 999999999
+            }
+          }
+        ],
+        "security": [
+          {
+            "pmKey": []
+          }
+        ]
+      }
+    },
+    "/api/feedback/{feedback_id}/category": {
+      "put": {
+        "summary": "Put a feedback in a category (null removes it)",
+        "tags": [
+          "Product Manager"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackCategoryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid PM key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A referenced resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The feedback was merged into another one and is read-only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Valid JSON, but invalid or unknown fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PM features are not configured on the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "feedback_id",
+            "in": "path",
+            "required": true,
+            "description": "The feedback to categorise",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 999999999
+            }
+          }
+        ],
+        "security": [
+          {
+            "pmKey": []
+          }
+        ]
+      }
+    },
+    "/api/feedback/{feedback_id}/merge": {
+      "post": {
+        "summary": "Merge a feedback into another one",
+        "tags": [
+          "Product Manager"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackMergeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid PM key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A referenced resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The feedback was merged into another one and is read-only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Valid JSON, but invalid or unknown fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PM features are not configured on the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "feedback_id",
+            "in": "path",
+            "required": true,
+            "description": "The feedback merged away (the source)",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 999999999
+            }
+          }
+        ],
+        "security": [
+          {
+            "pmKey": []
+          }
+        ]
+      }
+    },
+    "/api/category": {
+      "get": {
+        "summary": "List all categories",
+        "tags": [
+          "categories"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryListOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a category",
+        "tags": [
+          "Product Manager"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryOut"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "URL of the created resource",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid PM key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Valid JSON, but invalid or unknown fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PM features are not configured on the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "pmKey": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CategoryCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "description": "category name",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "category description",
+            "title": "Description"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CategoryCreate",
+        "type": "object"
+      },
+      "CategoryListOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "CategoryListOut",
+        "type": "object"
+      },
+      "CategoryOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "title": "CategoryOut",
+        "type": "object"
+      },
+      "CommentCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "description": "Comment provided by the user to the feedback",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Comment",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comment"
+        ],
+        "title": "CommentCreate",
+        "type": "object"
+      },
+      "CommentListOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CommentWithScoreOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "CommentListOut",
+        "type": "object"
+      },
+      "CommentOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "feedback_id": {
+            "title": "Feedback Id",
+            "type": "integer"
+          },
+          "comment": {
+            "title": "Comment",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "feedback_id",
+          "comment"
+        ],
+        "title": "CommentOut",
+        "type": "object"
+      },
+      "CommentWithScoreOut": {
+        "description": "A comment in a discussion: its score is the sum of its notations.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "feedback_id": {
+            "title": "Feedback Id",
+            "type": "integer"
+          },
+          "comment": {
+            "title": "Comment",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          },
+          "votes": {
+            "title": "Votes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "feedback_id",
+          "comment",
+          "score",
+          "votes"
+        ],
+        "title": "CommentWithScoreOut",
+        "type": "object"
+      },
+      "ErrorDetail": {
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "examples": [
+              422
+            ],
+            "title": "Code",
+            "type": "integer"
+          },
+          "message": {
+            "description": "What went wrong; for 422, one 'field: problem' per invalid field",
+            "examples": [
+              "rating: Input should be 1, 2, 3, 4 or 5"
+            ],
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorOut": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorOut",
+        "type": "object"
+      },
+      "FeedbackCategoryCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          }
+        },
+        "required": [
+          "category_id"
+        ],
+        "title": "FeedbackCategoryCreate",
+        "type": "object"
+      },
+      "FeedbackCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "rating": {
+            "$ref": "#/components/schemas/RatingValue"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional note or comment about the feedback",
+            "title": "Note"
+          }
+        },
+        "required": [
+          "rating"
+        ],
+        "title": "FeedbackCreate",
+        "type": "object"
+      },
+      "FeedbackListOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackSummaryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "FeedbackListOut",
+        "type": "object"
+      },
+      "FeedbackMergeCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "target_id": {
+            "description": "The feedback that receives the comments",
+            "title": "Target Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "target_id"
+        ],
+        "title": "FeedbackMergeCreate",
+        "type": "object"
+      },
+      "FeedbackOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "rating": {
+            "title": "Rating",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "merged_into_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merged Into Id"
+          }
+        },
+        "required": [
+          "id",
+          "rating",
+          "note",
+          "status",
+          "category_id",
+          "merged_into_id"
+        ],
+        "title": "FeedbackOut",
+        "type": "object"
+      },
+      "FeedbackStatus": {
+        "enum": [
+          "open",
+          "closed_backlog",
+          "closed_solved",
+          "closed_rejected"
+        ],
+        "title": "FeedbackStatus",
+        "type": "string"
+      },
+      "FeedbackStatusCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/FeedbackStatus"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "FeedbackStatusCreate",
+        "type": "object"
+      },
+      "FeedbackSummaryOut": {
+        "description": "A feedback as shown in a list: the feedback plus how many comments it has.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "rating": {
+            "title": "Rating",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "merged_into_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merged Into Id"
+          },
+          "comment_count": {
+            "title": "Comment Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "rating",
+          "note",
+          "status",
+          "category_id",
+          "merged_into_id",
+          "comment_count"
+        ],
+        "title": "FeedbackSummaryOut",
+        "type": "object"
+      },
+      "NotationCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "notation": {
+            "$ref": "#/components/schemas/NotationValue"
+          }
+        },
+        "required": [
+          "notation"
+        ],
+        "title": "NotationCreate",
+        "type": "object"
+      },
+      "NotationOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "comment_id": {
+            "title": "Comment Id",
+            "type": "integer"
+          },
+          "notation": {
+            "title": "Notation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "comment_id",
+          "notation"
+        ],
+        "title": "NotationOut",
+        "type": "object"
+      },
+      "NotationValue": {
+        "enum": [
+          -1,
+          0,
+          1
+        ],
+        "title": "NotationValue",
+        "type": "integer"
+      },
+      "RatingValue": {
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "title": "RatingValue",
+        "type": "integer"
+      }
+    },
+    "securitySchemes": {
+      "pmKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The PM key (SMARTFLOW_PM_API_KEY on the server)"
+      }
+    }
+  }
+}

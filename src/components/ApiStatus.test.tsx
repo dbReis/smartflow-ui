@@ -41,7 +41,7 @@ describe('ApiStatus', () => {
     expect(await screen.findByText('API offline')).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveAttribute(
       'title',
-      'The API answered HTTP 502.',
+      'The API is unavailable right now. Try again later.',
     )
   })
 })

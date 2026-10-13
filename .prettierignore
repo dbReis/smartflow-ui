@@ -4,3 +4,6 @@ package-lock.json
 # Hand-written project docs; keep their formatting as written.
 CLAUDE.md
 .claude
+# Generated from / copied out of the API; must stay byte-identical.
+openapi.json
+src/api/schema.d.ts

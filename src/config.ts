@@ -4,15 +4,19 @@ interface Env {
 }
 
 /**
- * Base URL for API requests. In development it is empty: requests go to
- * /api on the Vite dev server, which proxies them to VITE_API_URL.
+ * Base URL for API requests. In development it is the page's own origin:
+ * requests go to /api on the Vite dev server, which proxies them to
+ * VITE_API_URL.
  */
-export function resolveApiBaseUrl(env: Env): string {
+export function resolveApiBaseUrl(env: Env, pageOrigin: string): string {
   const url = env.VITE_API_URL?.trim()
   if (!url) {
     throw new Error('VITE_API_URL is not set (see .env.example).')
   }
-  return env.DEV ? '' : url.replace(/\/+$/, '')
+  return env.DEV ? pageOrigin : url.replace(/\/+$/, '')
 }
 
-export const apiBaseUrl = resolveApiBaseUrl(import.meta.env)
+export const apiBaseUrl = resolveApiBaseUrl(
+  import.meta.env,
+  window.location.origin,
+)
