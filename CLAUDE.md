@@ -78,6 +78,8 @@ Build the UI against these names; they are added to the API first.
 
 Until they exist, check the API repo's `ARCHITECTURE.md` and `/openapi.json` for the real shapes rather than guessing.
 
+Their exact proposed shapes are in `openapi.planned.json`; `npm run gen:api` merges it into the API's `openapi.json` and fails once the API provides one of them.
+
 ## Screens
 
 1. **Board** (`/`): feedback cards (rating stars, note, status badge, category chip, comment count); "New feedback" form with a 5-star picker and an optional note; friendly empty state.
