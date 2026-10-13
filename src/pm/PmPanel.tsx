@@ -9,7 +9,7 @@ import {
 import { useCategories, useFeedbackList } from '../api/queries'
 import type { Feedback, FeedbackStatus } from '../api/types'
 import { ErrorMessage } from '../components/ErrorMessage'
-import { STATUS_LABELS } from '../components/StatusBadge'
+import { STATUS_LABELS } from '../lib/status'
 import { usePmMode } from './pmStore'
 
 const NEW_CATEGORY = 'new'

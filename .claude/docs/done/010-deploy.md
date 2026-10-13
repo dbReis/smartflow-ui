@@ -27,3 +27,7 @@ Reviewers should open a link, not clone a repo. CI also proves every change pass
 ## Tasks
 
 - [x] T1 Workflow, README section (AC-1..5)
+
+## Changes after completion
+
+- **2026-10-13:** CI failed on every push because `VITE_API_URL` was not set yet. The `check` job now builds with a placeholder address (it only proves the app builds); the `deploy` job, on `main` only, builds with `vars.VITE_API_URL` and still fails without it (AC-3 holds for production).
