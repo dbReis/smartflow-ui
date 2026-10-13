@@ -13,8 +13,9 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    // GitHub Pages serves the site from /<repo-name>/.
-    base: '/smartflow-ui/',
+    // GitHub Pages serves the site from /<repo-name>/; a Render static site
+    // sets BASE_PATH=/ (spec 011).
+    base: process.env.BASE_PATH ?? '/smartflow-ui/',
     plugins: [react(), tailwindcss()],
     server: {
       // The API does not send CORS headers yet, so in development the browser
