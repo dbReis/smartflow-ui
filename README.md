@@ -35,6 +35,19 @@ Every push and pull request runs the checks in `.github/workflows/ci.yml`; pushe
 2. Repository **Settings → Secrets and variables → Actions → Variables**: add `VITE_API_URL` with the hosted API's address. Without it the build fails on purpose.
 3. The API must allow this site's origin (`https://dbreis.github.io`) with CORS; the dev proxy only covers local development.
 
+## Render (static site)
+
+**New → Static Site**, this repository:
+
+| Setting           | Value                                                           |
+| ----------------- | --------------------------------------------------------------- |
+| Build command     | `npm ci && npm run build`                                       |
+| Publish directory | `dist`                                                          |
+| `BASE_PATH`       | `/` (served at the root, not `/smartflow-ui/`)                  |
+| `VITE_API_URL`    | the API's public URL, e.g. `https://smartflow-api.onrender.com` |
+
+The browser calls the API directly, so the API must allow the site's origin with CORS. `VITE_API_URL` is read at build time: changing it needs a redeploy.
+
 ## API contract
 
 `openapi.json` is a copy of the API's spec (`python -m smartflow.openapi <dir>` in the API repo). `openapi.planned.json` lists endpoints the UI needs that the API does not have yet; `npm run gen:api` merges both into `src/api/schema.d.ts`, and fails once the API provides a planned endpoint, so it can be removed from the planned file.
