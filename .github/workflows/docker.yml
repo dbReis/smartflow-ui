@@ -5,7 +5,7 @@
 # One-time setup, in Settings → Secrets and variables → Actions → Secrets:
 #   DOCKERHUB_USERNAME  ddosreis
 #   DOCKERHUB_TOKEN     a Docker Hub access token with Read & Write scope
-name: Docker image
+name: Docker build
 
 on:
   push:
