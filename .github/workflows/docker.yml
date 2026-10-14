@@ -35,7 +35,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Tag 1.2.3 → image tags 1.2.3, 1.2 and latest.
       - name: Image tags
         id: meta
         uses: docker/metadata-action@v5
@@ -43,7 +42,6 @@ jobs:
           images: ${{ env.IMAGE }}
           tags: |
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
 
       - name: Build and push
         uses: docker/build-push-action@v6
