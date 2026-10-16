@@ -38,3 +38,4 @@ Discussion is what turns a rating into something actionable; votes bring the mos
 ## Changes after completion
 
 - **2026-10-13:** the API implemented its list endpoints (`GET /api/feedback/{id}/comments`, `GET /api/category`) as `{"items": [...]}` instead of the planned bare arrays; comments also carry `votes` (number of notations). The UI follows the API; the planned entries were removed.
+- **2026-10-16:** spec 012 replaces AC-3: votes are sent with `PUT` and `X-User-Id`, the arrows stay usable, and a vote can be changed or taken back.

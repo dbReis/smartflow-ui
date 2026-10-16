@@ -108,34 +108,6 @@ describe('Comments and votes (spec 006)', () => {
     ).toBeVisible()
   })
 
-  it('AC-3: votes once, then shows the vote and disables both arrows', async () => {
-    let score = 0
-    const fetch = mockApi({
-      ...base,
-      'GET /api/feedback/7': feedback(),
-      'GET /api/feedback/7/comments': () => ({ items: [comment({ score })] }),
-      'POST /api/comments/1/notation': async (request: Request) => {
-        score += ((await request.json()) as { notation: number }).notation
-        return Response.json(
-          { id: 1, comment_id: 1, notation: 1 },
-          { status: 201 },
-        )
-      },
-    })
-    renderPage()
-    await userEvent.click(await screen.findByRole('button', { name: 'Upvote' }))
-    expect(await screen.findByLabelText('Score 1')).toBeVisible()
-    const item = within(screen.getByRole('listitem'))
-    expect(item.getByRole('button', { name: 'Upvote' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    expect(item.getByRole('button', { name: 'Upvote' })).toBeDisabled()
-    expect(item.getByRole('button', { name: 'Downvote' })).toBeDisabled()
-    const votes = fetch.mock.calls.filter(([r]) => r.method === 'POST')
-    expect(votes).toHaveLength(1)
-  })
-
   it('AC-4: validates, posts the trimmed comment and clears the form', async () => {
     const fetch = mockApi({
       ...base,
@@ -166,7 +138,7 @@ describe('Comments and votes (spec 006)', () => {
       ...base,
       'GET /api/feedback/7': feedback(),
       'GET /api/feedback/7/comments': { items: [comment()] },
-      'POST /api/comments/1/notation': apiError(404, 'Comment 1 not found'),
+      'PUT /api/comments/1/notation': apiError(404, 'Comment 1 not found'),
       'POST /api/feedback/7/comments': apiError(409, 'Feedback 7 was merged'),
     })
     renderPage()
@@ -175,5 +147,98 @@ describe('Comments and votes (spec 006)', () => {
     await userEvent.type(screen.getByLabelText('Your comment'), 'Hi')
     await userEvent.click(screen.getByRole('button', { name: 'Comment' }))
     expect(await screen.findByText('Feedback 7 was merged')).toBeVisible()
+  })
+})
+
+describe('Change your vote (spec 012)', () => {
+  /** The API's notation store for one user: the score is their last vote. */
+  function mockVotingApi() {
+    let score = 0
+    const sent: { notation: number; userId: string | null }[] = []
+    const fetch = mockApi({
+      ...base,
+      'GET /api/feedback/7': feedback(),
+      'GET /api/feedback/7/comments': () => ({ items: [comment({ score })] }),
+      'PUT /api/comments/1/notation': async (request: Request) => {
+        score = ((await request.json()) as { notation: number }).notation
+        sent.push({
+          notation: score,
+          userId: request.headers.get('X-User-Id'),
+        })
+        return { id: 1, comment_id: 1, user_id: 'u', notation: score }
+      },
+    })
+    return { fetch, sent }
+  }
+
+  const arrows = () => {
+    const item = within(screen.getByRole('listitem'))
+    return {
+      up: item.getByRole('button', { name: 'Upvote' }),
+      down: item.getByRole('button', { name: 'Downvote' }),
+    }
+  }
+
+  it('AC-1..5: ▲ and ▼ step the vote between -1 and +1, as the same user', async () => {
+    const { fetch, sent } = mockVotingApi()
+    renderPage()
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Upvote' }))
+    expect(await screen.findByLabelText('Score 1')).toBeVisible()
+    expect(arrows().up).toHaveAttribute('aria-pressed', 'true')
+    expect(arrows().up).toBeDisabled()
+    expect(arrows().down).toBeEnabled()
+
+    await userEvent.click(arrows().down)
+    expect(await screen.findByLabelText('Score 0')).toBeVisible()
+    expect(arrows().up).toHaveAttribute('aria-pressed', 'false')
+    expect(arrows().down).toHaveAttribute('aria-pressed', 'false')
+    expect(arrows().up).toBeEnabled()
+
+    await userEvent.click(arrows().down)
+    expect(await screen.findByLabelText('Score -1')).toBeVisible()
+    expect(arrows().down).toHaveAttribute('aria-pressed', 'true')
+    expect(arrows().down).toBeDisabled()
+
+    await userEvent.click(arrows().up)
+    expect(await screen.findByLabelText('Score 0')).toBeVisible()
+
+    expect(sent.map((vote) => vote.notation)).toEqual([1, 0, -1, 0])
+    expect(new Set(sent.map((vote) => vote.userId)).size).toBe(1)
+    expect(sent[0].userId).toBe(localStorage.getItem('smartflow.userId'))
+    const others = fetch.mock.calls.filter(([r]) => r.method !== 'PUT')
+    expect(others.every(([r]) => !r.headers.has('X-User-Id'))).toBe(true)
+  })
+
+  it('AC-4: from a remembered +1, ▲ is disabled and ▼ sends 0', async () => {
+    localStorage.setItem('smartflow.votes', JSON.stringify({ 1: 1 }))
+    const { sent } = mockVotingApi()
+    renderPage()
+    expect(await screen.findByRole('button', { name: 'Upvote' })).toBeDisabled()
+    await userEvent.click(arrows().down)
+    expect(await screen.findByLabelText('Score 0')).toBeVisible()
+    expect(sent.map((vote) => vote.notation)).toEqual([0])
+  })
+
+  it('AC-6: on an API error, shows its message and keeps the vote', async () => {
+    localStorage.setItem('smartflow.votes', JSON.stringify({ 1: 1 }))
+    mockApi({
+      ...base,
+      'GET /api/feedback/7': feedback(),
+      'GET /api/feedback/7/comments': { items: [comment({ score: 1 })] },
+      'PUT /api/comments/1/notation': apiError(
+        401,
+        'Missing or invalid X-User-Id',
+      ),
+    })
+    renderPage()
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Downvote' }),
+    )
+    expect(
+      await screen.findByText('Missing or invalid X-User-Id'),
+    ).toBeVisible()
+    expect(arrows().up).toHaveAttribute('aria-pressed', 'true')
+    expect(arrows().down).toHaveAttribute('aria-pressed', 'false')
   })
 })

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useAddComment, useVote } from '../api/mutations'
 import { useComments } from '../api/queries'
 import type { CommentWithScore } from '../api/types'
-import { getVote, saveVote, type Vote } from '../lib/votes'
+import { getVote, nextNotation, saveVote, type Vote } from '../lib/votes'
 import { ErrorMessage } from './ErrorMessage'
 import { QueryError } from './QueryError'
 
@@ -40,12 +40,13 @@ export function Comments({ feedbackId }: { feedbackId: number }) {
               key={comment.id}
               comment={comment}
               voting={vote.isPending && vote.variables.commentId === comment.id}
-              onVote={(value) =>
+              onVote={(step) => {
+                const value = nextNotation(getVote(comment.id), step)
                 vote.mutate(
                   { commentId: comment.id, vote: value },
                   { onSuccess: () => saveVote(comment.id, value) },
                 )
-              }
+              }}
             />
           ))}
         </ul>
@@ -58,14 +59,14 @@ export function Comments({ feedbackId }: { feedbackId: number }) {
 interface CommentItemProps {
   comment: CommentWithScore
   voting: boolean
-  onVote: (vote: Vote) => void
+  onVote: (step: Vote) => void
 }
 
 function CommentItem({ comment, voting, onVote }: CommentItemProps) {
   // Read on each render: saveVote runs after a successful vote, just before
   // the comments refetch and re-render.
   const myVote = getVote(comment.id)
-  const disabled = voting || myVote !== undefined
+  // An arrow is disabled at the end of the range: there is no +2 or -2.
 
   return (
     <li className="flex gap-4 rounded-xl border border-neutral-200 bg-white p-4">
@@ -74,7 +75,7 @@ function CommentItem({ comment, voting, onVote }: CommentItemProps) {
           label="Upvote"
           symbol="▲"
           pressed={myVote === 1}
-          disabled={disabled}
+          disabled={voting || myVote === 1}
           onClick={() => onVote(1)}
         />
         <span
@@ -87,7 +88,7 @@ function CommentItem({ comment, voting, onVote }: CommentItemProps) {
           label="Downvote"
           symbol="▼"
           pressed={myVote === -1}
-          disabled={disabled}
+          disabled={voting || myVote === -1}
           onClick={() => onVote(-1)}
         />
       </div>

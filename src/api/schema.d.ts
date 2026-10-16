@@ -292,12 +292,14 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
-        /** Give a notation (-1, 0 or +1) to a comment */
-        post: {
+        /** Give or change your notation (-1, 0 or +1) on a comment */
+        put: {
             parameters: {
                 query?: never;
-                header?: never;
+                header: {
+                    /** @description Identifies the user (e.g. a UUID the client keeps) */
+                    "X-User-Id": string;
+                };
                 path: {
                     /** @description The comment to rate */
                     comment_id: number;
@@ -310,11 +312,9 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Created */
-                201: {
+                /** @description OK */
+                200: {
                     headers: {
-                        /** @description URL of the created resource */
-                        Location?: string;
                         [name: string]: unknown;
                     };
                     content: {
@@ -323,6 +323,15 @@ export interface paths {
                 };
                 /** @description The body is not valid JSON */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorOut"];
+                    };
+                };
+                /** @description Missing or invalid X-User-Id */
+                401: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -350,6 +359,7 @@ export interface paths {
                 };
             };
         };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -647,6 +657,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pm/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check a PM key (204 if it is valid) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The key is valid */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Missing or invalid PM key */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorOut"];
+                    };
+                };
+                /** @description PM features are not configured on the server */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorOut"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/category": {
         parameters: {
             query?: never;
@@ -745,63 +807,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/pm/session": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Check a PM key */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description The PM key is valid */
-                204: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Missing or wrong PM key */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorOut"];
-                    };
-                };
-                /** @description PM features are not configured on the server */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorOut"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** CategoryCreate */
+        /**
+         * CategoryCreate
+         * @description Body of `POST /api/category`.
+         */
         CategoryCreate: {
             /**
              * Name
@@ -815,12 +828,18 @@ export interface components {
              */
             description?: string | null;
         };
-        /** CategoryListOut */
+        /**
+         * CategoryListOut
+         * @description Body of `GET /api/category`. A wrapping object, so fields can be added later.
+         */
         CategoryListOut: {
             /** Items */
             items: components["schemas"]["CategoryOut"][];
         };
-        /** CategoryOut */
+        /**
+         * CategoryOut
+         * @description A category as returned by the API.
+         */
         CategoryOut: {
             /** Id */
             id: number;
@@ -829,7 +848,12 @@ export interface components {
             /** Description */
             description: string | null;
         };
-        /** CommentCreate */
+        /**
+         * CommentCreate
+         * @description Body of `POST /api/feedback/{id}/comments`.
+         *
+         *     Whitespace is stripped first, so a blank comment fails `min_length`.
+         */
         CommentCreate: {
             /**
              * Comment
@@ -837,12 +861,18 @@ export interface components {
              */
             comment: string;
         };
-        /** CommentListOut */
+        /**
+         * CommentListOut
+         * @description Body of `GET /api/feedback/{id}/comments`, best score first.
+         */
         CommentListOut: {
             /** Items */
             items: components["schemas"]["CommentWithScoreOut"][];
         };
-        /** CommentOut */
+        /**
+         * CommentOut
+         * @description A comment as returned by the API.
+         */
         CommentOut: {
             /** Id */
             id: number;
@@ -853,7 +883,10 @@ export interface components {
         };
         /**
          * CommentWithScoreOut
-         * @description A comment in a discussion: its score is the sum of its notations.
+         * @description A comment in a list, with its vote totals.
+         *
+         *     `score` is the sum of its notations (0 when it has none); `votes` is how
+         *     many notations it received.
          */
         CommentWithScoreOut: {
             /** Id */
@@ -867,7 +900,10 @@ export interface components {
             /** Votes */
             votes: number;
         };
-        /** ErrorDetail */
+        /**
+         * ErrorDetail
+         * @description What went wrong: the status code and a human-readable message.
+         */
         ErrorDetail: {
             /**
              * Code
@@ -882,16 +918,28 @@ export interface components {
              */
             message: string;
         };
-        /** ErrorOut */
+        /**
+         * ErrorOut
+         * @description `{"error": {"code": ..., "message": ...}}`, written by BaseHandler.write_error.
+         */
         ErrorOut: {
             error: components["schemas"]["ErrorDetail"];
         };
-        /** FeedbackCategoryCreate */
+        /**
+         * FeedbackCategoryCreate
+         * @description Body of `PUT /api/feedback/{id}/category`.
+         *
+         *     `category_id` is required but may be null: null removes the category,
+         *     while a missing field is a 422 (so an empty body can't clear it by mistake).
+         */
         FeedbackCategoryCreate: {
             /** Category Id */
             category_id: number | null;
         };
-        /** FeedbackCreate */
+        /**
+         * FeedbackCreate
+         * @description Body of `POST /api/feedback`. Status and category are PM-only, so not accepted here.
+         */
         FeedbackCreate: {
             rating: components["schemas"]["RatingValue"];
             /**
@@ -901,12 +949,18 @@ export interface components {
              */
             note?: string | null;
         };
-        /** FeedbackListOut */
+        /**
+         * FeedbackListOut
+         * @description Body of `GET /api/feedback`.
+         */
         FeedbackListOut: {
             /** Items */
             items: components["schemas"]["FeedbackSummaryOut"][];
         };
-        /** FeedbackMergeCreate */
+        /**
+         * FeedbackMergeCreate
+         * @description Body of `POST /api/feedback/{id}/merge`; the URL holds the source.
+         */
         FeedbackMergeCreate: {
             /**
              * Target Id
@@ -914,16 +968,19 @@ export interface components {
              */
             target_id: number;
         };
-        /** FeedbackOut */
+        /**
+         * FeedbackOut
+         * @description A feedback as returned by the API.
+         *
+         *     Rating and status use the enums so the OpenAPI spec lists their allowed values.
+         */
         FeedbackOut: {
             /** Id */
             id: number;
-            /** Rating */
-            rating: number;
+            rating: components["schemas"]["RatingValue"];
             /** Note */
             note: string | null;
-            /** Status */
-            status: string;
+            status: components["schemas"]["FeedbackStatus"];
             /** Category Id */
             category_id: number | null;
             /** Merged Into Id */
@@ -931,26 +988,28 @@ export interface components {
         };
         /**
          * FeedbackStatus
+         * @description Where a feedback is in the PM's triage. New feedback is OPEN.
          * @enum {string}
          */
         FeedbackStatus: "open" | "closed_backlog" | "closed_solved" | "closed_rejected";
-        /** FeedbackStatusCreate */
+        /**
+         * FeedbackStatusCreate
+         * @description Body of `PUT /api/feedback/{id}/status`.
+         */
         FeedbackStatusCreate: {
             status: components["schemas"]["FeedbackStatus"];
         };
         /**
          * FeedbackSummaryOut
-         * @description A feedback as shown in a list: the feedback plus how many comments it has.
+         * @description A feedback in the list, with how many comments it has.
          */
         FeedbackSummaryOut: {
             /** Id */
             id: number;
-            /** Rating */
-            rating: number;
+            rating: components["schemas"]["RatingValue"];
             /** Note */
             note: string | null;
-            /** Status */
-            status: string;
+            status: components["schemas"]["FeedbackStatus"];
             /** Category Id */
             category_id: number | null;
             /** Merged Into Id */
@@ -958,26 +1017,36 @@ export interface components {
             /** Comment Count */
             comment_count: number;
         };
-        /** NotationCreate */
+        /**
+         * NotationCreate
+         * @description Body of `PUT /api/comments/{id}/notation`: -1, 0 or +1.
+         */
         NotationCreate: {
             notation: components["schemas"]["NotationValue"];
         };
-        /** NotationOut */
+        /**
+         * NotationOut
+         * @description A user's notation on a comment, as returned by the API.
+         */
         NotationOut: {
             /** Id */
             id: number;
             /** Comment Id */
             comment_id: number;
+            /** User Id */
+            user_id: string;
             /** Notation */
             notation: number;
         };
         /**
          * NotationValue
+         * @description The allowed votes. A comment's score is the sum of its notations.
          * @enum {integer}
          */
         NotationValue: -1 | 0 | 1;
         /**
          * RatingValue
+         * @description The 1-5 rating a user gives.
          * @enum {integer}
          */
         RatingValue: 1 | 2 | 3 | 4 | 5;

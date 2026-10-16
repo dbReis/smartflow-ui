@@ -310,8 +310,8 @@
       }
     },
     "/api/comments/{comment_id}/notation": {
-      "post": {
-        "summary": "Give a notation (-1, 0 or +1) to a comment",
+      "put": {
+        "summary": "Give or change your notation (-1, 0 or +1) on a comment",
         "tags": [
           "notations"
         ],
@@ -326,20 +326,12 @@
           }
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotationOut"
-                }
-              }
-            },
-            "headers": {
-              "Location": {
-                "description": "URL of the created resource",
-                "schema": {
-                  "type": "string"
                 }
               }
             }
@@ -373,6 +365,16 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid X-User-Id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -385,6 +387,17 @@
               "type": "integer",
               "minimum": 0,
               "maximum": 999999999
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "description": "Identifies the user (e.g. a UUID the client keeps)",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             }
           }
         ]
@@ -714,6 +727,44 @@
         ]
       }
     },
+    "/api/pm/session": {
+      "get": {
+        "summary": "Check a PM key (204 if it is valid)",
+        "tags": [
+          "Product Manager"
+        ],
+        "responses": {
+          "204": {
+            "description": "The key is valid"
+          },
+          "401": {
+            "description": "Missing or invalid PM key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PM features are not configured on the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "pmKey": []
+          }
+        ]
+      }
+    },
     "/api/category": {
       "get": {
         "summary": "List all categories",
@@ -820,6 +871,7 @@
     "schemas": {
       "CategoryCreate": {
         "additionalProperties": false,
+        "description": "Body of `POST /api/category`.",
         "properties": {
           "name": {
             "description": "category name",
@@ -850,6 +902,7 @@
         "type": "object"
       },
       "CategoryListOut": {
+        "description": "Body of `GET /api/category`. A wrapping object, so fields can be added later.",
         "properties": {
           "items": {
             "items": {
@@ -866,6 +919,7 @@
         "type": "object"
       },
       "CategoryOut": {
+        "description": "A category as returned by the API.",
         "properties": {
           "id": {
             "title": "Id",
@@ -897,6 +951,7 @@
       },
       "CommentCreate": {
         "additionalProperties": false,
+        "description": "Body of `POST /api/feedback/{id}/comments`.\n\nWhitespace is stripped first, so a blank comment fails `min_length`.",
         "properties": {
           "comment": {
             "description": "Comment provided by the user to the feedback",
@@ -913,6 +968,7 @@
         "type": "object"
       },
       "CommentListOut": {
+        "description": "Body of `GET /api/feedback/{id}/comments`, best score first.",
         "properties": {
           "items": {
             "items": {
@@ -929,6 +985,7 @@
         "type": "object"
       },
       "CommentOut": {
+        "description": "A comment as returned by the API.",
         "properties": {
           "id": {
             "title": "Id",
@@ -952,7 +1009,7 @@
         "type": "object"
       },
       "CommentWithScoreOut": {
-        "description": "A comment in a discussion: its score is the sum of its notations.",
+        "description": "A comment in a list, with its vote totals.\n\n`score` is the sum of its notations (0 when it has none); `votes` is how\nmany notations it received.",
         "properties": {
           "id": {
             "title": "Id",
@@ -986,6 +1043,7 @@
         "type": "object"
       },
       "ErrorDetail": {
+        "description": "What went wrong: the status code and a human-readable message.",
         "properties": {
           "code": {
             "description": "HTTP status code",
@@ -1012,6 +1070,7 @@
         "type": "object"
       },
       "ErrorOut": {
+        "description": "`{\"error\": {\"code\": ..., \"message\": ...}}`, written by BaseHandler.write_error.",
         "properties": {
           "error": {
             "$ref": "#/components/schemas/ErrorDetail"
@@ -1025,6 +1084,7 @@
       },
       "FeedbackCategoryCreate": {
         "additionalProperties": false,
+        "description": "Body of `PUT /api/feedback/{id}/category`.\n\n`category_id` is required but may be null: null removes the category,\nwhile a missing field is a 422 (so an empty body can't clear it by mistake).",
         "properties": {
           "category_id": {
             "anyOf": [
@@ -1046,6 +1106,7 @@
       },
       "FeedbackCreate": {
         "additionalProperties": false,
+        "description": "Body of `POST /api/feedback`. Status and category are PM-only, so not accepted here.",
         "properties": {
           "rating": {
             "$ref": "#/components/schemas/RatingValue"
@@ -1072,6 +1133,7 @@
         "type": "object"
       },
       "FeedbackListOut": {
+        "description": "Body of `GET /api/feedback`.",
         "properties": {
           "items": {
             "items": {
@@ -1089,6 +1151,7 @@
       },
       "FeedbackMergeCreate": {
         "additionalProperties": false,
+        "description": "Body of `POST /api/feedback/{id}/merge`; the URL holds the source.",
         "properties": {
           "target_id": {
             "description": "The feedback that receives the comments",
@@ -1103,14 +1166,14 @@
         "type": "object"
       },
       "FeedbackOut": {
+        "description": "A feedback as returned by the API.\n\nRating and status use the enums so the OpenAPI spec lists their allowed values.",
         "properties": {
           "id": {
             "title": "Id",
             "type": "integer"
           },
           "rating": {
-            "title": "Rating",
-            "type": "integer"
+            "$ref": "#/components/schemas/RatingValue"
           },
           "note": {
             "anyOf": [
@@ -1124,8 +1187,7 @@
             "title": "Note"
           },
           "status": {
-            "title": "Status",
-            "type": "string"
+            "$ref": "#/components/schemas/FeedbackStatus"
           },
           "category_id": {
             "anyOf": [
@@ -1162,6 +1224,7 @@
         "type": "object"
       },
       "FeedbackStatus": {
+        "description": "Where a feedback is in the PM's triage. New feedback is OPEN.",
         "enum": [
           "open",
           "closed_backlog",
@@ -1173,6 +1236,7 @@
       },
       "FeedbackStatusCreate": {
         "additionalProperties": false,
+        "description": "Body of `PUT /api/feedback/{id}/status`.",
         "properties": {
           "status": {
             "$ref": "#/components/schemas/FeedbackStatus"
@@ -1185,15 +1249,14 @@
         "type": "object"
       },
       "FeedbackSummaryOut": {
-        "description": "A feedback as shown in a list: the feedback plus how many comments it has.",
+        "description": "A feedback in the list, with how many comments it has.",
         "properties": {
           "id": {
             "title": "Id",
             "type": "integer"
           },
           "rating": {
-            "title": "Rating",
-            "type": "integer"
+            "$ref": "#/components/schemas/RatingValue"
           },
           "note": {
             "anyOf": [
@@ -1207,8 +1270,7 @@
             "title": "Note"
           },
           "status": {
-            "title": "Status",
-            "type": "string"
+            "$ref": "#/components/schemas/FeedbackStatus"
           },
           "category_id": {
             "anyOf": [
@@ -1251,6 +1313,7 @@
       },
       "NotationCreate": {
         "additionalProperties": false,
+        "description": "Body of `PUT /api/comments/{id}/notation`: -1, 0 or +1.",
         "properties": {
           "notation": {
             "$ref": "#/components/schemas/NotationValue"
@@ -1263,6 +1326,7 @@
         "type": "object"
       },
       "NotationOut": {
+        "description": "A user's notation on a comment, as returned by the API.",
         "properties": {
           "id": {
             "title": "Id",
@@ -1272,6 +1336,10 @@
             "title": "Comment Id",
             "type": "integer"
           },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
           "notation": {
             "title": "Notation",
             "type": "integer"
@@ -1280,12 +1348,14 @@
         "required": [
           "id",
           "comment_id",
+          "user_id",
           "notation"
         ],
         "title": "NotationOut",
         "type": "object"
       },
       "NotationValue": {
+        "description": "The allowed votes. A comment's score is the sum of its notations.",
         "enum": [
           -1,
           0,
@@ -1295,6 +1365,7 @@
         "type": "integer"
       },
       "RatingValue": {
+        "description": "The 1-5 rating a user gives.",
         "enum": [
           1,
           2,

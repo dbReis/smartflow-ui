@@ -1,41 +1,4 @@
 {
   "$comment": "Endpoints the UI needs that the API does not have yet (see CLAUDE.md). Merged into openapi.json by scripts/merge-openapi.mjs; remove each entry once the API provides it.",
-  "paths": {
-    "/api/pm/session": {
-      "get": {
-        "summary": "Check a PM key",
-        "tags": ["pm"],
-        "security": [
-          {
-            "pmKey": []
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "The PM key is valid"
-          },
-          "401": {
-            "description": "Missing or wrong PM key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorOut"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "PM features are not configured on the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorOut"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  "paths": {}
 }

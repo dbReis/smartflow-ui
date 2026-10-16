@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, call, pmApi } from './client'
 import { queryKeys } from './queries'
-import type { FeedbackStatus, Rating } from './types'
+import type { FeedbackStatus, NotationValue, Rating } from './types'
+import { getUserId } from './userId'
 
 export function useCreateFeedback() {
   const queryClient = useQueryClient()
@@ -39,10 +40,21 @@ export function useAddComment(feedbackId: number) {
 export function useVote(feedbackId: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ commentId, vote }: { commentId: number; vote: 1 | -1 }) =>
+    // PUT: the API keeps one notation per user and comment; sending again
+    // replaces it, and 0 takes the vote back (spec 012).
+    mutationFn: ({
+      commentId,
+      vote,
+    }: {
+      commentId: number
+      vote: NotationValue
+    }) =>
       call(
-        api.POST('/api/comments/{comment_id}/notation', {
-          params: { path: { comment_id: commentId } },
+        api.PUT('/api/comments/{comment_id}/notation', {
+          params: {
+            path: { comment_id: commentId },
+            header: { 'X-User-Id': getUserId() },
+          },
           body: { notation: vote },
         }),
       ),
